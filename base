@@ -183,12 +183,17 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
 #44 -> Setup Supergfxctl - graphics switching
     pacman -S supergfxctl
     systemctl enable --now supergfxd
-    ******GPU Mode - Command to switch******
-    Integrated - sudo supergfxctl --mode integrated
-    Nvidia - sudo supergfxctl --mode nvidia
-    Hybrid - sudo supergfxctl --mode hybrid
-    Compute - sudo supergfxctl --mode compute
-    VFIO - sudo supergfxctl --mode vfio
+    ******Command to switch***************
+    # integrated, uses the iGPU only and force-disables the dGPU
+    sudo supergfxctl --mode integrated
+    # nvidia, uses the Nvidia gpu only
+    sudo supergfxctl --mode nvidia
+    # hybrid, enables Nvidia prime-offload mode
+    sudo supergfxctl --mode hybrid
+    # compute, enables Nvidia without Xorg. Useful for ML/Cuda
+    sudo supergfxctl --mode compute
+    # vfio, binds the Nvidia gpu to vfio for VM pass-through
+    sudo supergfxctl --mode vfio
     ****************************************
     reboot after switching
     ****************************************
