@@ -206,3 +206,18 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     initrd /amd-ucode.img
     initrd /initramfs-linux-g14.img
     options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash
+    
+#46 -> Install git
+    sudo pacman -S git
+
+#47 -> Setup yay (AUR Helper)
+    cd /opt
+    sudo git clone https://aur.archlinux.org/yay-git.git
+    sudo chown -R shadow ./yay-git
+    cd yay-git
+    makepkg -si
+ 
+ #48 -> Setup gnome-tweaks
+     sudo pacman -S gnome-tweaks
+     yay -S chrome-gnome-shell
+     
