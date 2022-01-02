@@ -221,3 +221,16 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
      sudo pacman -S gnome-tweaks
      yay -S chrome-gnome-shell
      
+#49 -> Install node and npm
+    sudo pacman -S nodejs-lts-gallium
+    sudo pacman -S npm
+
+#50 -> Setup asusctl ([-gex]: Gnome extension)
+    cd /opt
+    sudo git clone https://gitlab.com/asus-linux/asusctl-gex.git
+    sudo chown -R shadow ./asusctl-gex
+    cd asusctl-gex
+    npm install
+    npm run build && npm run install-user
+    npm install
+    npm run debug
