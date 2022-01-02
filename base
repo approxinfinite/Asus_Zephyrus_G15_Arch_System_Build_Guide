@@ -183,6 +183,17 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
 #44 -> Setup Supergfxctl - graphics switching
     pacman -S supergfxctl
     systemctl enable --now supergfxd
+    ******GPU Mode - Command to switch******
+    Integrated - sudo supergfxctl --mode integrated
+    Nvidia - sudo supergfxctl --mode nvidia
+    Hybrid - sudo supergfxctl --mode hybrid
+    Compute - sudo supergfxctl --mode compute
+    VFIO - sudo supergfxctl --mode vfio
+    ****************************************
+    reboot after switching
+    ****************************************
+    # get current mode
+    sudo supergfxctl -g 
     
 #45 -> Edit /boot/loader/entries/arch.conf and reboot
     title arch
@@ -190,4 +201,3 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     initrd /amd-ucode.img
     initrd /initramfs-linux-g14.img
     options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash
-    
