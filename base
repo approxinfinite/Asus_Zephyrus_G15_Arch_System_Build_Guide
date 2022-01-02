@@ -63,7 +63,7 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     arch-chroot /mnt
 
 #18 -> Installing processor microcode and ntfs-3g
-    pacman -S amd-ucode xf86-video-amd
+    pacman -S amd-ucode xf86-video-amdgpu
 
 #19 -> Symlinking localtime
     ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
@@ -154,3 +154,22 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     umount -a
     reboot
     login as shadow
+
+#39 -> Install Firefox
+    sudo pacman -S firefox
+
+#40 -> get the repo add to your /etc/pacman.conf at the end
+    [g14]
+    SigLevel = DatabaseNever Optional TrustAll
+    Server = https://arch.asus-linux.org
+    
+#40 -> Custom kernel - drivers fixes, hardware support
+    pacman -Sy linux-g14 linux-g14-headers
+
+#41 -> Edit /boot/loader/entries/arch.conf
+    title arch
+    linux /vmlinuz-linux-g14
+    initrd /amd-ucode.img
+    initrd /initramfs-linux-g14.img
+    options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash modprobe.blacklist=nouveau
+
