@@ -166,10 +166,28 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
 #40 -> Custom kernel - drivers fixes, hardware support
     pacman -Sy linux-g14 linux-g14-headers
 
-#41 -> Edit /boot/loader/entries/arch.conf
+#41 -> Edit /boot/loader/entries/arch.conf and reboot
     title arch
     linux /vmlinuz-linux-g14
     initrd /amd-ucode.img
     initrd /initramfs-linux-g14.img
     options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash modprobe.blacklist=nouveau
 
+#42 -> setting up asusctl for - custom fan profiles, anime, led control etc.
+    pacman -S asusctl
+    systemctl enable --now power-profiles-daemon.service
+    
+#43 -> Install nvidia driver
+    pacman -S nvidia-dkms
+
+#44 -> Setup Supergfxctl - graphics switching
+    pacman -S supergfxctl
+    systemctl enable --now supergfxd
+    
+#45 -> Edit /boot/loader/entries/arch.conf and reboot
+    title arch
+    linux /vmlinuz-linux-g14
+    initrd /amd-ucode.img
+    initrd /initramfs-linux-g14.img
+    options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash
+    
