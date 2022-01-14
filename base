@@ -186,8 +186,8 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     ******Command to switch***************
     # integrated, uses the iGPU only and force-disables the dGPU
     sudo supergfxctl --mode integrated
-    # nvidia, uses the Nvidia gpu only
-    sudo supergfxctl --mode nvidia
+    # dedicated, uses the Nvidia gpu only
+    sudo supergfxctl --mode dedicated
     # hybrid, enables Nvidia prime-offload mode
     sudo supergfxctl --mode hybrid
     # compute, enables Nvidia without Xorg. Useful for ML/Cuda
@@ -210,27 +210,27 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
 #46 -> Install git
     sudo pacman -S git
 
-#47 -> Setup yay (AUR Helper)
+#47 -> Setup paru (AUR Helper)
     cd /opt
-    sudo git clone https://aur.archlinux.org/yay-git.git
-    sudo chown -R shadow ./yay-git
-    cd yay-git
+    sudo git clone https://aur.archlinux.org/paru-git.git
+    sudo chown -R shadow ./paru-git
+    cd paru-git
     makepkg -si
  
- #48 -> Setup gnome-tweaks
+#48 -> Setup gnome-tweaks
      sudo pacman -S gnome-tweaks
-     yay -S chrome-gnome-shell
+     paru -S chrome-gnome-shell
      
-#49 -> Install node and npm
-    sudo pacman -S nodejs-lts-gallium
-    sudo pacman -S npm
 
-#50 -> Setup asusctl ([-gex]: Gnome extension)
-    cd /opt
-    sudo git clone https://gitlab.com/asus-linux/asusctl-gex.git
-    sudo chown -R shadow ./asusctl-gex
-    cd asusctl-gex
-    npm install
-    npm run build && npm run install-user
-    npm install
-    npm run debug
+#49 -> Install comic fonts and theme
+    yay -S ttf-comic-mono-git
+    pacman -S deepin-icon-theme deepin-gtk-theme
+
+#50 -> Setup gpu tools
+    ------------------------------------------------------
+    For getting stats of nvidia graphics
+    ______________________________________________________
+    nvidia-smi
+
+    sudo pacman -S virtualgl
+    glxspheres64
