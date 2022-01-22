@@ -1,3 +1,5 @@
+dd if=archlinux-version-x86_64.iso of=/dev/sdb bs=4M
+
 Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
 
 #0 -> Connect to Internet
