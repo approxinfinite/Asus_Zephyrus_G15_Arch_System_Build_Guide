@@ -236,3 +236,7 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
 
     sudo pacman -S virtualgl
     glxspheres64
+    
+#51 -> Setup zsh
+    sudo pacman -S zsh
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
