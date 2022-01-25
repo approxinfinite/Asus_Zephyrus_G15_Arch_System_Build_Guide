@@ -240,3 +240,12 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
 #51 -> Setup zsh
     sudo pacman -S zsh
     sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    
+#52 -> Fonts
+    sudo pacman -S freetype2 fontconfig cairo ttf-ubuntu-font-family
+    mkdir ~/.config/fontconfig 
+    cd ~/.config/fontconfig
+    gedit fonts.conf
+    paru -S ttf-ms-fonts 
+    reboot
+    
