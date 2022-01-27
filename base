@@ -1,31 +1,34 @@
-dd if=archlinux-version-x86_64.iso of=/dev/sdb bs=4M
+#0 => Create a bootable usb
+   dd if=archlinux-version-x86_64.iso of=/dev/sdb bs=4M
 
-Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
+#1 => Add to boot options by clicking e on boot screen 
+   modprobe.blacklist=nouveau
 
-#0 -> Connect to Internet
+#2 => Connect to Internet
+    rfkill unblock all
     iwctl
     device list
     station wlan0 connect Zenos_5g
 
-#1 -> Check you are connected with a ping test
+#3 => Check you are connected with a ping test
     ping -c 3 archlinux.org
 
-#2 -> Synchronize with network time
+#4 => Synchronize with network time
     timedatectl set-ntp true
 
-#3 -> Update your mirrorlist
+#5 => Update your mirrorlist
     reflector --verbose --latest 200 --sort rate --save /etc/pacman.d/mirrorlist
 
-#4 -> Install terminus-font
-    pacman -Sy terminus-font
+#6 => Install terminus-font and archlinux-keyring
+    pacman -Sy terminus-font archlinux-keyring
 
-#5 -> setfont
+#7 => setfont
     setfont ter-v24b
 
-#6 -> Check available disks
+#8 => Check available disks
     lsblk
 
-#7 -> Partition disk create 4 partitions [nvme1n1p1 as boot(20) +1G, nvme1n1p2 as swap(19) +20G, nvme1n1p3 as root(20) +{{remaining}}G]
+#9 => Partition disk create 4 partitions [nvme1n1p1 as boot(20) +1G, nvme1n1p2 as swap(19) +20G, nvme1n1p3 as root(20) +{{remaining}}G]
     fdisk /dev/nvme1n1
     # g - create a new gpt id
     # n - new partition
@@ -33,83 +36,83 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     # t - set type
     # w - write all the changes
 
-#8 -> Format Boot partition
+#10 => Format Boot partition
     mkfs.fat -F 32 /dev/nvme1n1p1
 
-#9 -> Format ext, Root partition
+#11 => Format ext, Root partition
     mkfs.ext4 /dev/nvme1n1p3
 
-#10 -> Format swap partition
+#12 => Format swap partition
     mkswap /dev/nvme1n1p2
 
-#11 -> Activate swap
+#13 => Activate swap
     swapon /dev/nvme1n1p2
 
-#12 -> Mount root partition
+#14 => Mount root partition
     mount /dev/nvme1n1p3 /mnt
 
-#13 -> Make directory for boot partition
+#15 => Make directory for boot partition
     mkdir /mnt/boot
 
-#14 -> Mount boot partition, Also generate fstab
+#16 => Mount boot partition, Also generate fstab
     mount /dev/nvme1n1p1 /mnt/boot
 
-#15 -> Pacstrap
+#17 => Pacstrap
     pacstrap /mnt base base-devel linux-lts linux-firmware linux-lts-headers efibootmgr mtools dosfstools vim iwd zsh ntfs-3g
 
-#16 -> Copy systemd network configuration files and generate fstab
+#18 => Copy systemd network configuration files and generate fstab
     cp /etc/systemd/network/* /mnt/etc/systemd/network
     genfstab -U /mnt >> /mnt/etc/fstab
 
-#17 -> Change root to new system
+#19 => Change root to new system
     arch-chroot /mnt
 
-#18 -> Installing processor microcode and ntfs-3g
+#20 => Installing processor microcode and ntfs-3g
     pacman -S amd-ucode xf86-video-amdgpu
 
-#19 -> Symlinking localtime
+#21 => Symlinking localtime
     ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
 
-#20 -> Synchronize with network time
+#22 => Synchronize with network time
     timedatectl set-ntp true
 
-#21 -> Synchronize with hardware clock
+#23 => Synchronize with hardware clock
     hwclock --systohc
 
-#22 -> Adjust system clock from real time clock
+#24 => Adjust system clock from real time clock
     timedatectl set-local-rtc 1 --adjust-system-clock
 
-#23 -> Setup locale
+#25 => Setup locale
     vim /etc/locale.gen
     # Uncomment your locale
 
-#24 -> Generate locale
+#26 => Generate locale
     locale-gen
 
-#25 -> Create locale.conf
+#27 => Create locale.conf
     vim /etc/locale.conf
     # Add the below line with your locale info
     LANG=en_US.UTF-8
 
-#26 -> Set your hostname
+#28 => Set your hostname
     vim /etc/hostname
     # Add something like below line
     approxinfinite
 
-#27 -> Set your hosts
+#29 => Set your hosts
     vim /etc/hosts
     # Add the below lines by making required changes
     127.0.0.1   localhost
     ::1         localhost
     127.0.1.1   approxinfinite.localdomain   approxinfinite
 
-#28 -> Set root password
+#30 => Set root password
     passwd
 
-#29 -> Install systemd-boot
+#31 => Install systemd-boot
     bootctl install
 
-#30 -> Create a boot entry
+#32 => Create a boot entry
     vim /boot/loader/entries/arch.conf
     # Add the below lines by making required changes
     title Arch
@@ -118,138 +121,13 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     initrd /initramfs-linux-lts.img
     options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash modprobe.blacklist=nouveau
 
-#31 -> Configure bootloader
+#33 => Configure bootloader
     vim /boot/loader/loader.conf
     # Add the below lines by making required changes
     #timeout 3
     default arch
 
-#32 -> Configure mkinitcpio
-    vim /etc/mkinitcpio.conf
-    # Update "HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)" to
-    HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck)
-
-#33 -> generate initramfs  
-    mkinitcpio -p linux-lts
-
-#34 -> Install  gnome
-    pacman -S gnome networkmanager
-    
-#35 -> User creation
-    useradd -m -g wheel shadow
-    passwd shadow
-
-#36 -> EDITOR=vim visudo
-    # uncomment below line
-    %wheel ALL=(ALL) ALL
-
-#37 -> Enable required services
-    systemctl enable systemd-networkd
-    systemctl enable systemd-resolved
-    systemctl enable systemd-timesyncd
-    systemctl enable NetworkManager
-    systemctl enable bluetooth
-    systemctl enable gdm
-
-#38 -> Final Steps
-    exit
-    umount -a
-    reboot
-    login as shadow
-
-#39 -> Install Firefox
-    sudo pacman -S firefox
-
-#40 -> get the repo add to your /etc/pacman.conf at the end
-    [g14]
-    SigLevel = DatabaseNever Optional TrustAll
-    Server = https://arch.asus-linux.org
-    
-#40 -> Custom kernel - drivers fixes, hardware support
-    pacman -Sy linux-g14 linux-g14-headers
-
-#41 -> Edit /boot/loader/entries/arch.conf and reboot
-    title arch
-    linux /vmlinuz-linux-g14
-    initrd /amd-ucode.img
-    initrd /initramfs-linux-g14.img
-    options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash modprobe.blacklist=nouveau
-
-#42 -> setting up asusctl for - custom fan profiles, anime, led control etc.
-    pacman -S asusctl
-    systemctl enable --now power-profiles-daemon.service
-    
-#43 -> Install nvidia driver
-    pacman -S nvidia-dkms
-
-#44 -> Setup Supergfxctl - graphics switching
-    pacman -S supergfxctl
-    systemctl enable --now supergfxd
-    ******Command to switch***************
-    # integrated, uses the iGPU only and force-disables the dGPU
-    sudo supergfxctl --mode integrated
-    # dedicated, uses the Nvidia gpu only
-    sudo supergfxctl --mode dedicated
-    # hybrid, enables Nvidia prime-offload mode
-    sudo supergfxctl --mode hybrid
-    # compute, enables Nvidia without Xorg. Useful for ML/Cuda
-    sudo supergfxctl --mode compute
-    # vfio, binds the Nvidia gpu to vfio for VM pass-through
-    sudo supergfxctl --mode vfio
-    ****************************************
-    reboot after switching
-    ****************************************
-    # get current mode
-    sudo supergfxctl -g 
-    
-#45 -> Edit /boot/loader/entries/arch.conf and reboot
-    title arch
-    linux /vmlinuz-linux-g14
-    initrd /amd-ucode.img
-    initrd /initramfs-linux-g14.img
-    options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer nvidia-drm.modeset=0 quiet splash
-    
-#46 -> Install git
-    sudo pacman -S git
-
-#47 -> Setup paru (AUR Helper)
-    cd /opt
-    sudo git clone https://aur.archlinux.org/paru-git.git
-    sudo chown -R shadow ./paru-git
-    cd paru-git
-    makepkg -si
- 
-#48 -> Setup gnome-tweaks
-     sudo pacman -S gnome-tweaks
-     paru -S chrome-gnome-shell
-     
-
-#49 -> Install comic fonts and theme
-    yay -S ttf-comic-mono-git
-    pacman -S deepin-icon-theme deepin-gtk-theme
-
-#50 -> Setup gpu tools
-    ------------------------------------------------------
-    For getting stats of nvidia graphics
-    ______________________________________________________
-    nvidia-smi
-
-    sudo pacman -S virtualgl
-    glxspheres64
-    
-#51 -> Setup zsh
-    sudo pacman -S zsh
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    
-#52 -> Fonts
-    sudo pacman -S freetype2 fontconfig cairo ttf-ubuntu-font-family
-    mkdir ~/.config/fontconfig 
-    cd ~/.config/fontconfig
-    gedit fonts.conf
-    paru -S ttf-ms-fonts 
-    reboot
-    
-#53 -> Enable dual boot menu for windows partition
+#34 => Enable dual boot menu for windows partition
     #   ~ lsblk
     #   NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
     #   nvme1n1     259:0    0 953.9G  0 disk 
@@ -269,5 +147,192 @@ Add to boot options by clicking e on boot screen: modprobe.blacklist=nouveau
     # add below mentioned lines
     timeout 10
     default arch
-    
 
+
+#34 => Configure mkinitcpio
+    vim /etc/mkinitcpio.conf
+    # Update "HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)" to
+    HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck)
+
+#35 => generate initramfs  
+    mkinitcpio -p linux-lts
+
+#36 => Install  plasma
+    pacman -S plasma
+    pacman -Rnsc discover oxygen plasma-vault
+    pacman -S xdg-desktop-portal ark unrar kdeconnect sshfs dolphin okular konsole kate gwenview
+    export GTK_USE_PORTAL=1
+    
+#or => Install gnome
+    pacman -S gnome
+
+#37 => Install networkmanager
+    pacman -S networkmanager
+
+#37 => User creation
+    useradd -m -g wheel shadow
+    passwd shadow
+
+#38 => EDITOR=vim visudo
+    # uncomment below line
+    %wheel ALL=(ALL) ALL
+
+#39 => Enable required services
+    systemctl enable systemd-networkd
+    systemctl enable systemd-resolved
+    systemctl enable systemd-timesyncd
+    systemctl enable NetworkManager
+    systemctl enable bluetooth
+    # for KDE
+    systemctl enable sddm
+    # for gnome
+    systemctl enable gdm
+
+#40 => Final Steps
+    exit
+    umount -a
+    reboot
+    login as shadow
+
+#41 => Install Firefox
+    sudo pacman -S firefox
+
+#42 => get the repo add to your /etc/pacman.conf at the end
+    [g14]
+    SigLevel = DatabaseNever Optional TrustAll
+    Server = https://arch.asus-linux.org
+    
+#43 => Custom kernel - drivers fixes, hardware support
+    pacman -Sy linux-g14 linux-g14-headers
+
+#44 => Edit /boot/loader/entries/arch.conf and reboot
+    title arch
+    linux /vmlinuz-linux-g14
+    initrd /amd-ucode.img
+    initrd /initramfs-linux-g14.img
+    options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer quiet splash modprobe.blacklist=nouveau
+
+#45 => setting up asusctl for - custom fan profiles, anime, led control etc.
+    pacman -S asusctl
+    systemctl enable --now power-profiles-daemon.service
+    
+#46 => Install nvidia driver
+    pacman -S nvidia-dkms
+
+#47 => Setup Supergfxctl - graphics switching
+    pacman -S supergfxctl
+    systemctl enable --now supergfxd
+    ******Command to switch***************
+    # integrated, uses the iGPU only and force-disables the dGPU
+    sudo supergfxctl --mode integrated
+    # dedicated, uses the Nvidia gpu only
+    sudo supergfxctl --mode dedicated
+    # hybrid, enables Nvidia prime-offload mode
+    sudo supergfxctl --mode hybrid
+    # compute, enables Nvidia without Xorg. Useful for ML/Cuda
+    sudo supergfxctl --mode compute
+    # vfio, binds the Nvidia gpu to vfio for VM pass-through
+    sudo supergfxctl --mode vfio
+    ****************************************
+    reboot after switching
+    ****************************************
+    # get current mode
+    sudo supergfxctl -g 
+    
+#48 => Edit /boot/loader/entries/arch.conf and reboot
+    title arch
+    linux /vmlinuz-linux-g14
+    initrd /amd-ucode.img
+    initrd /initramfs-linux-g14.img
+    options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer nvidia-drm.modeset=0 quiet splash
+    
+#49 => Install git
+    sudo pacman -S git
+
+#50 => Setup paru (AUR Helper)
+    cd /opt
+    sudo git clone https://aur.archlinux.org/paru-git.git
+    sudo chown -R shadow ./paru-git
+    cd paru-git
+    makepkg -si
+ 
+#51 => Setup gnome-tweaks (For Gnome)
+     sudo pacman -S gnome-tweaks
+     paru -S chrome-gnome-shell
+     
+
+#52 => Install comic fonts
+    paru -S ttf-comic-mono-git freetype2 ttf-ms-fonts otf-san-francisco-pro
+    sudo pacman -S freetype2 fontconfig cairo ttf-ubuntu-font-family noto-fonts noto-fonts-cjk ttf-dejavu ttf-liberation ttf-opensans
+    ln -s /etc/fonts/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d
+    ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
+    ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d
+    #Let's then add the following line to /etc/profile.d/freetype2.sh:
+    export FREETYPE_PROPERTIES="truetype:interpreter-version=40"
+    #Create the file ~/.config/fontconfig/conf.d/20-no-embedded.conf and make it look like the following:
+    <?xml version="1.0"?>
+    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+    <fontconfig>
+    <match target="font">
+        <edit name="embeddedbitmap" mode="assign">
+        <bool>false</bool>
+        </edit>
+    </match>
+    </fontconfig>
+    #------------------------------------------------------
+    reboot
+
+#53 => Install gtk & icon theme    
+    pacman -S deepin-icon-theme deepin-gtk-theme
+
+#53 => Setup gpu tools
+    #------------------------------------------------------
+    #For getting stats of nvidia graphics
+    #______________________________________________________
+    nvidia-smi
+    sudo pacman -S virtualgl
+    glxspheres64
+    
+#54 => Setup zsh
+    sudo pacman -S zsh
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    
+#56 => Installing other required packages
+    pacman -S libappindicator-gtk3 appmenu-gtk-module xdg-desktop-portal
+
+#57 => Improving laptop battery life with TLP and powertop
+    pacman -S tlp
+    systemctl enable tlp.service --now
+    powertop --auto-tune
+    #However, don't enable powertop's service if you already use TLP.
+
+#58 => Setup touch pad
+    pacman -S xdotool wmctrl
+    yay -S libinput-gestures
+    #libinput-gestures will detect touchpad gestures and run a command when any set gesture is detected. xdotool will react to this by simulating keyboard events. To allow xdotool to work, the user you're using should be added to the input group:
+    gpasswd -a $USER input
+    libinput-gestures-setup autostart
+    libinput-gestures-setup start
+
+#59 => Installing and setting up chromium
+    paru -S chromium-vaapi-bin
+    vim ~/.config/chromium-flags.conf
+    #add the below given data
+    --force-device-scale-factor=1.25 --ignore-gpu-blacklist --enable-gpu-rasterization --enable-native-gpu-memory-buffers --enable-zero-copy --enable-accelerated-mjpeg-decode --enable-accelerated-video --use-gl=egl --disable-gpu-driver-bug-workarounds
+    #install the below extension in browser if needed
+    h264ify 
+
+#60 => Systemd configuration
+    #Taming the journal's size
+    #Systemd's system journal's size can go out of control. To control it do below mentioned changes
+    journalctl --vacuum-size=100M
+    journalctl --vacuum-time=2weeks
+    #Forwarding the journal to /dev/tty12.
+    vim /etc/systemd/journald.conf.d/fw-tty12.conf
+    #fill it like this:
+    [Journal]
+    ForwardToConsole=yes
+    TTYPath=/dev/tty12
+    MaxLevelConsole=info
+    #Service restart
+    systemctl restart systemd-journald.service
