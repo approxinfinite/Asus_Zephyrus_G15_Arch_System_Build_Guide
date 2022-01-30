@@ -93,10 +93,10 @@
     Server = https://arch.asus-linux.org
 
 #17 => Installing all the required packages
-    pacman -S linux-g14 linux-firmware linux-g14-headers base-devel efibootmgr mtools dosfstools openssh iwd zsh \
+    pacman -Sy linux-g14 linux-firmware linux-g14-headers base-devel efibootmgr mtools dosfstools openssh iwd zsh \
     ntfs-3g amd-ucode xf86-video-amdgpu git plasma xdg-desktop-portal ark unrar kdeconnect sshfs dolphin okular konsole kate gwenview \
     networkmanager asusctl nvidia-dkms supergfxctl firefox deepin-icon-theme deepin-gtk-theme libappindicator-gtk3 appmenu-gtk-module \
-    xdg-desktop-portal virtualgl
+    virtualgl
     
 #18 => Removing unwanted packages
     pacman -Rnsc discover oxygen plasma-vault
