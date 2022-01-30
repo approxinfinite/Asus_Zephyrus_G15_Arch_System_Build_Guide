@@ -93,7 +93,7 @@
     Server = https://arch.asus-linux.org
 
 #17 => Installing all the required packages
-    pacman -S linux-g14 linux-firmware linux-g14-headers base-devel efibootmgr mtools dosfstools grub openssh os-prober iwd zsh \
+    pacman -S linux-g14 linux-firmware linux-g14-headers base-devel efibootmgr mtools dosfstools openssh iwd zsh \
     ntfs-3g amd-ucode xf86-video-amdgpu git plasma xdg-desktop-portal ark unrar kdeconnect sshfs dolphin okular konsole kate gwenview \
     networkmanager asusctl nvidia-dkms supergfxctl firefox deepin-icon-theme deepin-gtk-theme libappindicator-gtk3 appmenu-gtk-module \
     xdg-desktop-portal virtualgl
@@ -133,30 +133,47 @@
     ::1         localhost
     127.0.1.1   ai.localdomain   ai
 
-#26 => Install GRUB on EFI mode:
-    os-prober #to detect windows boot partition
-    grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
-
-#27 => Setup GRUB
-    #Setup locale for GRUB
-    cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
-    #Write GRUB config:
-    grub-mkconfig -o /boot/grub/grub.cfg
-
-#28 => Set root password
-    passwd
-
-#29 => User creation
-    useradd -m -g wheel ishna
-    passwd ishna
-
-#30 => Configure mkinitcpio
+#26 => Configure mkinitcpio
     vim /etc/mkinitcpio.conf
     # Update "HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)" to
     HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck)
 
-#31 => generate initramfs  
+#27 => generate initramfs  
     mkinitcpio -p linux-g14
+
+#28 => => Create linux boot entry
+    vim /boot/loader/entries/arch.conf
+    # Add the below lines by making required changes
+    title arch
+    linux /vmlinuz-linux-g14
+    initrd /amd-ucode.img
+    initrd /initramfs-linux-g14.img
+    options rw root=/dev/nvme1n1p3 resume=/dev/nvme1n1p2 pci=noaer nvidia-drm.modeset=0 quiet splash
+
+#29 => Enable boot menu item for windows 
+    lsblk
+    #   NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+    #   nvme1n1     259:0    0 953.9G  0 disk 
+    #   ...
+    #   nvme0n1     259:4    0 465.8G  0 disk 
+    #➜ ├─nvme0n1p1 259:5    0   100M  0 part 
+    #   ├─nvme0n1p2 259:6    0    16M  0 part 
+    #   ...
+    mount /dev/nvme0n1p1 /mnt
+    cp -R /mnt/EFI/Boot /boot/EFI/
+    cp -R /mnt/EFI/Microsoft /boot/EFI/
+    umount /mnt
+
+#30 => configure bootloader
+    vim /boot/loader/loader.conf
+    # add below mentioned lines
+    timeout 10
+    default arch    
+
+#31 => Set root password and create a user
+    passwd
+    useradd -m -g wheel ishna
+    passwd ishna
 
 #32 => EDITOR=vim visudo
     # uncomment below line
