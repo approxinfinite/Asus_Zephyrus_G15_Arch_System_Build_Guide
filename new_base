@@ -95,7 +95,7 @@
     SigLevel = DatabaseNever Optional TrustAll
     Server = https://arch.asus-linux.org
 
-#16 => Installing processor microcode and ntfs-3g
+#16 => Installing all the required packages
     pacman -S linux-g14 linux-firmware linux-g14-headers base-devel efibootmgr mtools dosfstools grub openssh os-prober vim iwd zsh ntfs-3g amd-ucode xf86-video-amdgpu
 
 #17 => Chroot into installed system
