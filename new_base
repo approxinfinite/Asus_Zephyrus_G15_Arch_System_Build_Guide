@@ -4,34 +4,31 @@
 #1 => Add to boot options by clicking e on boot screen 
    modprobe.blacklist=nouveau
 
-#2 => Change keyboard layout
-   loadkeys no
-
-#3 => Connect to Internet
+#2 => Connect to Internet
    rfkill unblock all
    iwctl
    device list
    station wlan0 connect Zenos_5g
 
-#4 => Ping some site on the Internet to verify connection
+#3 => Ping some site on the Internet to verify connection
    ping -c 3 archlinux.org
 
-#5 => Update system clock
+#4 => Update system clock
    timedatectl set-ntp true
 
-#6 => You can verify the status with 
+#5 => You can verify the status with 
    timedatectl status
 
-#7 => Update your mirrorlist
+#6 => Update your mirrorlist
    reflector --verbose --latest 200 --sort rate --save /etc/pacman.d/mirrorlist
 
-#6 => Install terminus-font and archlinux-keyring
+#7 => Install terminus-font and archlinux-keyring
    pacman -Syy terminus-font archlinux-keyring
 
-#7 => setfont
+#8 => setfont
    setfont ter-v24b
 
-#8 => Create partitions
+#9 => Create partitions
    #Create EFI partition
    fdisk -l #to find the designation for the SSD. (Most likely /dev/nvme1n1)
    fdisk /dev/nvme1n1
@@ -62,55 +59,61 @@
     enter
     w
 
-#9 => Create the filesystems
+#10 => Create the filesystems
    mkfs.fat -F32 /dev/nvme1n1p1
    mkswap /dev/nvme1n1p2
    swapon /dev/nvme1n1p2
    mkfs.ext4 /dev/nvme1n1p3
    mkfs.ext4 /dev/nvme1n1p4
 
-#10 => Create the /, /boot and /home directories
+#11 => Create the /, /boot and /home directories
     mount /dev/nvme1n1p3 /mnt
     mkdir /mnt/boot/EFI
     mount /dev/nvme1n1p1 /mnt/boot/EFI
     mkdir /mnt/home
     mount /dev/nvme1n1p4 /mnt/home
 
-#11 => Install Arch linux base packages
-    pacstrap -i /mnt base
+#12 => Install Arch linux base and vim packages
+    pacstrap -i /mnt base vim
 
-#12 => Generate the /etc/fstab file
+#13 => Generate the /etc/fstab file
     genfstab -U -p /mnt >> /mnt/etc/fstab
 
-#13 => Copy systemd network configuration files
+#14 => Copy systemd network configuration files
     cp /etc/systemd/network/* /mnt/etc/systemd/network
 
-#14 => Change root to new system
+#15 => Change root to new system
     arch-chroot /mnt
 
-#15 => get the repo add to your /etc/pacman.conf at the end
+#16 => get the repo add to your /etc/pacman.conf at the end
     vim /etc/pacman.conf
     #-----------------------------------------------------
     [g14]
     SigLevel = DatabaseNever Optional TrustAll
     Server = https://arch.asus-linux.org
 
-#16 => Installing all the required packages
-    pacman -S linux-g14 linux-firmware linux-g14-headers base-devel efibootmgr mtools dosfstools grub openssh os-prober vim iwd zsh ntfs-3g amd-ucode xf86-video-amdgpu
+#17 => Installing all the required packages
+    pacman -S linux-g14 linux-firmware linux-g14-headers base-devel efibootmgr mtools dosfstools grub openssh os-prober iwd zsh \
+    ntfs-3g amd-ucode xf86-video-amdgpu git plasma xdg-desktop-portal ark unrar kdeconnect sshfs dolphin okular konsole kate gwenview \
+    networkmanager asusctl nvidia-dkms supergfxctl firefox deepin-icon-theme deepin-gtk-theme libappindicator-gtk3 appmenu-gtk-module \
+    xdg-desktop-portal virtualgl
+    
+#18 => Removing unwanted packages
+    pacman -Rnsc discover oxygen plasma-vault
 
-#17 => Chroot into installed system
-    arch-chroot /mnt
+#19 => Use KDE file picker
+    export GTK_USE_PORTAL=1
 
-#18 => Set the timezone
+#20 => Set the timezone
     ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
 
-#19 => Update the Hardware clock
+#21 => Update the Hardware clock
     hwclock --systohc
 
-#20 => Adjust system clock from real time clock
+#22 => Adjust system clock from real time clock
     timedatectl set-local-rtc 1 --adjust-system-clock
 
-#21 => Set locale
+#23 => Set locale
     sed -i 's/#en_US.UTF-8/en_US.UTF-8/g' /etc/locale.gen (uncomment en_US.UTF-8)
     locale-gen
     #Create locale.conf
@@ -118,73 +121,113 @@
     # Add the below line with your locale info
     LANG=en_US.UTF-8
 
-#22 => Set your hostname
+#24 => Set your hostname
     vim /etc/hostname
     # Add something like below line
-    approxinfinite
+    ai
 
-#23 => Set your hosts
+#25 => Set your hosts
     vim /etc/hosts
     # Add the below lines by making required changes
     127.0.0.1   localhost
     ::1         localhost
-    127.0.1.1   approxinfinite.localdomain   approxinfinite
+    127.0.1.1   ai.localdomain   ai
 
-#24 => Install GRUB on EFI mode:
+#26 => Install GRUB on EFI mode:
+    os-prober #to detect windows boot partition
     grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
 
-#25 => Setup GRUB
+#27 => Setup GRUB
     #Setup locale for GRUB
     cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
     #Write GRUB config:
     grub-mkconfig -o /boot/grub/grub.cfg
 
-#26 => Set root password
+#28 => Set root password
     passwd
 
-#27 => Configure mkinitcpio
+#29 => User creation
+    useradd -m -g wheel ishna
+    passwd ishna
+
+#30 => Configure mkinitcpio
     vim /etc/mkinitcpio.conf
     # Update "HOOKS=(base udev autodetect modconf block filesystems keyboard fsck)" to
     HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck)
 
-#28 => generate initramfs  
+#31 => generate initramfs  
     mkinitcpio -p linux-g14
 
-#29 => Install  plasma
-    pacman -S plasma
-    pacman -Rnsc discover oxygen plasma-vault
-    pacman -S xdg-desktop-portal ark unrar kdeconnect sshfs dolphin okular konsole kate gwenview
-    export GTK_USE_PORTAL=1
-
-#30 => Setup zsh
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-#or => Install gnome
-#    pacman -S gnome
-
-#31 => Install networkmanager
-    pacman -S networkmanager
-
-#32 => User creation
-    useradd -m -g wheel shadow
-    passwd shadow
-
-#33 => EDITOR=vim visudo
+#32 => EDITOR=vim visudo
     # uncomment below line
     %wheel ALL=(ALL) ALL
 
-#34 => Install Firefox
-    sudo pacman -S firefox
+#33 => Enable required services
+    systemctl enable systemd-networkd
+    systemctl enable systemd-resolved
+    systemctl enable systemd-timesyncd
+    systemctl enable NetworkManager
+    systemctl enable bluetooth
+    systemctl enable power-profiles-daemon
+    systemctl enable supergfxd
+    systemctl enable sddm
 
-#35 => setting up asusctl for - custom fan profiles, anime, led control etc.
-    pacman -S asusctl
+#34 => Final Steps
+    exit
+    umount -a
+    reboot
+    login as ishna
+
+#35 => Setup zsh
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+#36 => Setup paru (AUR Helper)
+    cd /opt
+    sudo git clone https://aur.archlinux.org/paru-git.git
+    sudo chown -R $USER ./paru-git
+    cd paru-git
+    makepkg -si
+
+#37 => Install required fonts
+    paru -S ttf-comic-mono-git freetype2 ttf-ms-fonts
+    sudo pacman -S freetype2 fontconfig cairo ttf-ubuntu-font-family noto-fonts noto-fonts-cjk ttf-dejavu ttf-liberation \
+    ttf-opensans ttf-cascadia-code
+    sudo ln -s /etc/fonts/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d
+    sudo ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
+    sudo ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d
+    sudo vim /etc/profile.d/freetype2.sh
+    #Add/uncomment the following line to/in it, save and close 
+    export FREETYPE_PROPERTIES="truetype:interpreter-version=40"
+    #--------------------------------------------------------
+    mkdir -p ~/.config/fontconfig/conf.d/
+    vim ~/.config/fontconfig/conf.d/20-no-embedded.conf
+    #Add the following lines to it, save and close 
+    <?xml version="1.0"?>
+    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+    <fontconfig>
+    <match target="font">
+        <edit name="embeddedbitmap" mode="assign">
+        <bool>false</bool>
+        </edit>
+    </match>
+    </fontconfig>
+    #------------------------------------------------------
+    reboot
+
+#38 => Setup touch pad
+    sudo pacman -S xdotool wmctrl
+    paru -S libinput-gestures
+    #libinput-gestures will detect touchpad gestures and run a command when any set gesture is detected. 
+    #xdotool will react to this by simulating keyboard events. To allow xdotool to work, the user you're using should be added to the input group:
+    sudo gpasswd -a $USER input
+    libinput-gestures-setup autostart
+    libinput-gestures-setup start
     
-#36 => Install nvidia driver
-    pacman -S nvidia-dkms
+#39 => Installing Razer software for keyboard, mouse configuration
+    paru -S openrazer-meta razercommander
+    sudo gpasswd -a $USER plugdev
 
-#37 => Setup Supergfxctl - graphics switching
-    pacman -S supergfxctl
-    ******Command to switch***************
+#40 => Supergfxctl - graphics switching
     # integrated, uses the iGPU only and force-disables the dGPU
     sudo supergfxctl --mode integrated
     # dedicated, uses the Nvidia gpu only
@@ -201,125 +244,9 @@
     # get current mode
     sudo supergfxctl -g 
 
-#38 => Install git
-    sudo pacman -S git
-
-#39 => Install gtk & icon theme    
-    pacman -S deepin-icon-theme deepin-gtk-theme
-
-#40 => Installing other required packages (for KDE)
-    pacman -S libappindicator-gtk3 appmenu-gtk-module xdg-desktop-portal
-
-#41 => Setup gpu tools
+#41 => GPU stats tools
     #------------------------------------------------------
     #For getting stats of nvidia graphics
     #______________________________________________________
     nvidia-smi
-    sudo pacman -S virtualgl
     glxspheres64
-
-#42 => Improving laptop battery life with TLP and powertop
-    pacman -S tlp
-    powertop --auto-tune
-    #However, don't enable powertop's service if you already use TLP.
-
-#43 => Systemd configuration
-    #Taming the journal's size
-    #Systemd's system journal's size can go out of control. To control it do below mentioned changes
-    journalctl --vacuum-size=100M
-    journalctl --vacuum-time=2weeks
-    #Forwarding the journal to /dev/tty12.
-    vim /etc/systemd/journald.conf.d/fw-tty12.conf
-    #fill it like this:
-    [Journal]
-    ForwardToConsole=yes
-    TTYPath=/dev/tty12
-    MaxLevelConsole=info
-
-#44 => Enable required services
-    systemctl enable systemd-networkd
-    systemctl enable systemd-resolved
-    systemctl enable systemd-timesyncd
-    systemctl enable NetworkManager
-    systemctl enable bluetooth
-    systemctl enable systemd-journald
-    systemctl enable power-profiles-daemon
-    systemctl enable supergfxd
-    systemctl enable tlp
-    systemctl enable sddm
-    # for gdm
-    # systemctl enable gdm
-
-#45 => Final Steps
-    exit
-    umount -a
-    reboot
-    login as shadow
-
-#46 => Setup paru (AUR Helper)
-    cd /opt
-    sudo git clone https://aur.archlinux.org/paru-git.git
-    sudo chown -R shadow ./paru-git
-    cd paru-git
-    makepkg -si
- 
-#47 => Setup gnome-tweaks (For Gnome)
-     sudo pacman -S gnome-tweaks
-     paru -S chrome-gnome-shell
-
-#48 => Install comic fonts
-    paru -S ttf-comic-mono-git freetype2 ttf-ms-fonts otf-san-francisco-pro
-    sudo pacman -S freetype2 fontconfig cairo ttf-ubuntu-font-family noto-fonts noto-fonts-cjk ttf-dejavu ttf-liberation ttf-opensans ttf-cascadia-code
-    ln -s /etc/fonts/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d
-    ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
-    ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d
-    #Let's then add the following line to /etc/profile.d/freetype2.sh:
-    export FREETYPE_PROPERTIES="truetype:interpreter-version=40"
-    #Create the file ~/.config/fontconfig/conf.d/20-no-embedded.conf and make it look like the following:
-    <?xml version="1.0"?>
-    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-    <fontconfig>
-    <match target="font">
-        <edit name="embeddedbitmap" mode="assign">
-        <bool>false</bool>
-        </edit>
-    </match>
-    </fontconfig>
-    #------------------------------------------------------
-    reboot
-
-#49 => Setup touch pad
-    pacman -S xdotool wmctrl
-    paru -S libinput-gestures
-    #libinput-gestures will detect touchpad gestures and run a command when any set gesture is detected. xdotool will react to this by simulating keyboard events. To allow xdotool to work, the user you're using should be added to the input group:
-    gpasswd -a $USER input
-    libinput-gestures-setup autostart
-    libinput-gestures-setup start
-
-#50 => Installing and setting up chromium
-    paru -S chromium-vaapi-bin
-    vim ~/.config/chromium-flags.conf
-    #add the below given data
-    --force-device-scale-factor=1.25 --ignore-gpu-blacklist --enable-gpu-rasterization --enable-native-gpu-memory-buffers --enable-zero-copy --enable-accelerated-mjpeg-decode --enable-accelerated-video --use-gl=egl --disable-gpu-driver-bug-workarounds
-    #install the below extension in browser if needed
-    h264ify 
-    
-#51 => Installing Razer software for keyboard, mouse configuration
-    paru -S openrazer-meta
-    paru -S razercommander
-    sudo gpasswd -a $USER plugdev
-    
-#52 => customize ~/.bashrc
-    vim ~/.bashrc
-    #------------------------------
-    #
-    # ~/.bashrc
-    #
-
-    # If not running interactively, don't do anything
-    [[ $- != *i* ]] && return
-
-    alias ls='ls --color=auto'
-    shopt -s autocd #Allows you to cd into directory merely by typing the directory name.
-    HISTSIZE= HISTFILESIZE= # Infinite history.
-    export PS1="\[$(tput bold)\]\[$(tput setaf 2)\]\$(date +"%T.%3N") \[$(tput setaf 1)\][\[$(tput setaf 6)\]\u\[$(tput setaf 5)\]@\[$(tput setaf 3)\]\h \[$(tput setaf 7)\]\W\[$(tput setaf 1)\]]\[$(tput setaf 2)\]\\$ \[$(tput sgr0)\]"
