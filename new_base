@@ -239,7 +239,7 @@
     # vfio, binds the Nvidia gpu to vfio for VM pass-through
     sudo supergfxctl --mode vfio
     ****************************************
-    reboot after switching
+    relogin after switching
     ****************************************
     # get current mode
     sudo supergfxctl -g 
