@@ -29,7 +29,7 @@
    setfont ter-v24b
 
 #9 => Create partitions
-   #Create EFI partition
+   #Create EFI Boot partition
    fdisk -l #to find the designation for the SSD. (Most likely /dev/nvme1n1)
    fdisk /dev/nvme1n1
     g #(to create a new partition table)
@@ -68,8 +68,8 @@
 
 #11 => Create the /, /boot and /home directories
     mount /dev/nvme1n1p3 /mnt
-    mkdir /mnt/boot/EFI
-    mount /dev/nvme1n1p1 /mnt/boot/EFI
+    mkdir /mnt/boot
+    mount /dev/nvme1n1p1 /mnt/boot
     mkdir /mnt/home
     mount /dev/nvme1n1p4 /mnt/home
 
